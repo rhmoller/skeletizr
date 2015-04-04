@@ -148,17 +148,26 @@ class Manipulator {
     document.addEventListener("mousemove", (e) => {
       if (this.startPos == null) return;
 
-      let m = this.getMousePos(e);
 
       if (this.bone == null) {
+        // cannot use getMousePos() because it shifts origin when panning, so the delta gets wrong
+        let m = {
+          "x": (e.pageX - this.startPos.x) / this.zoom,
+          "y": (e.pageY - this.startPos.y) / this.zoom
+        };
+
         let dx = (m.x - this.startPos.mx) * this.zoom;
         let dy = (m.y - this.startPos.my) * this.zoom;
         this.panX = this.startPos.x + dx;
         this.panY = this.startPos.y + dy;
-        console.log(`${this.panX}, ${this.panY} - ${dx}, ${dy}`)
-        this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
+        console.log(`${this.panX}, ${this.panY} - ${dx}, ${dy} :: m: ${m.x}, ${m.y}  s: ${this.startPos.mx},${this.startPos.my}`)
+        requestAnimationFrame(() => {
+          this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
+        });
         return;
       }
+
+      let m = this.getMousePos(e);
 
       switch (this.mode) {
         case "Move":
