@@ -11,7 +11,7 @@ var preloader = new Preloader([
 
 class Bone {
 
-  constructor(img, width, height, rect) {
+  constructor(img, width, height, rect, pivot, px, py) {
     this.img = img;
     this.width = width;
     this.height = height;
@@ -19,14 +19,21 @@ class Bone {
     this.y = 0;
     this.a = 0;
     this.rect = rect;
+    this.pivot = pivot;
+    this.pivotX = px;
+    this.pivotY = py;
     this.selected = false;
   }
 
   apply() {
-    let tx = `translate(${this.x} ${this.y}) rotate(${this.a} ${0.5 *this.w} ${0.5*this.h})`
+    let tx = `translate(${this.x} ${this.y}) rotate(${this.a} ${this.pivotX} ${this.pivotY})`
     this.img.transform(tx);
     this.rect.transform(tx);
+
+    this.pivot.transform(`translate(${this.x + this.pivotX} ${this.y + this.pivotY})`);
+
     this.rect.attr({"stroke": this.selected ? "blue" : "transparent"});
+    this.pivot.attr({"stroke": this.selected ? "blue" : "transparent"});
   }
 
 }
@@ -66,6 +73,10 @@ class Manipulator {
         case 82:
           this.setMode("Rotate");
           break;
+
+        case 80:
+          this.setMode("Pivot");
+          break;
       }
     })
 
@@ -74,6 +85,7 @@ class Manipulator {
       switch (e.keyCode) {
         case 77:
         case 82:
+        case 80:
           this.setMode("Select");
           break;
 
@@ -123,10 +135,7 @@ class Manipulator {
           var x = this.bone.x;
           var y = this.bone.y;
           var a = this.bone.a;
-          var w2 = this.bone.width *  0.5;
-          var h2 = this.bone.height *  0.5;
-
-          var ma = Snap.angle(x + w2, y + h2, mx, my);
+          var ma = Snap.angle(x + this.bone.pivotX, y + this.bone.pivotY, mx, my);
 
           this.startPos = {
             "x": x,
@@ -135,6 +144,21 @@ class Manipulator {
             "mx" : mx,
             "my" : my,
             "ma" : ma
+          }
+
+          break;
+
+        case "Pivot":
+          var mx = m.x;
+          var my = m.y;
+          var x = this.bone.pivotX;
+          var y = this.bone.pivotY;
+
+          this.startPos = {
+            "x": x,
+            "y": y,
+            "mx" : mx,
+            "my" : my,
           }
 
           break;
@@ -160,10 +184,7 @@ class Manipulator {
         let dy = (m.y - this.startPos.my) * this.zoom;
         this.panX = this.startPos.x + dx;
         this.panY = this.startPos.y + dy;
-        console.log(`${this.panX}, ${this.panY} - ${dx}, ${dy} :: m: ${m.x}, ${m.y}  s: ${this.startPos.mx},${this.startPos.my}`)
-        requestAnimationFrame(() => {
-          this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
-        });
+        this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
         return;
       }
 
@@ -188,16 +209,24 @@ class Manipulator {
           var dx = mx - this.startPos.mx;
           var dy = my - this.startPos.my;
 
-          var w2 = this.bone.width *  0.5;
-          var h2 = this.bone.height *  0.5;
-
-          var ma = Snap.angle(this.startPos.x + w2, this.startPos.y + h2, mx, my);
+          var ma = Snap.angle(this.startPos.x + this.bone.pivotX, this.startPos.y + this.bone.pivotY, mx, my);
           var da = ma - this.startPos.ma;
           var a = this.startPos.a + da;
 
           this.bone.a = a;
           this.bone.apply();
 
+          break;
+
+        case "Pivot":
+          var mx = m.x;
+          var my = m.y;
+          var dx = mx - this.startPos.mx;
+          var dy = my - this.startPos.my;
+
+          this.bone.pivotX = this.startPos.x + dx;
+          this.bone.pivotY = this.startPos.y + dy;
+          this.bone.apply();
           break;
       }
 
@@ -242,10 +271,14 @@ function start(assets) {
   function createBone(path, x, y) {
     var asset = assets[path];
     var img = s.image(path, 0, 0, asset.width, asset.height);
+
     var rect = s.rect(0, 0, asset.width, asset.height);
     rect.attr({"fill": "transparent", "stroke": "transparent", "strokeWidth": 2});
 
-    var bone = new Bone(img, asset.width, asset.height, rect);
+    var pivot = s.circle(0, 0, 4);
+    pivot.attr({"fill": "transparent", "stroke": "transparent", "strokeWidth": 2});
+
+    var bone = new Bone(img, asset.width, asset.height, rect, pivot, 0.5 * asset.width, 0.5 * asset.height);
     bone.x = x;
     bone.y = y;
     bone.a = 0;
