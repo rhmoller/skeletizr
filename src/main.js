@@ -33,17 +33,28 @@ class Bone {
 
 class Manipulator {
 
-  constructor(bones) {
+  constructor(svg, bones) {
+    this.svg = svg;
     this.bones = bones,
     this.bone = null;
     this.mode = "Select";
     this.modeStatus = document.getElementById("mode");
     this.startPos = null;
+    this.zoom = 1;
+    this.panX = 400;
+    this.panY = 300;
   }
 
   setMode(mode) {
     this.mode = mode;
     this.modeStatus.innerHTML = mode;
+  }
+
+  getMousePos(e) {
+    return {
+      "x": (e.pageX - this.panX) / this.zoom,
+      "y": (e.pageY - this.panY) / this.zoom
+    }
   }
 
   init() {
@@ -59,22 +70,56 @@ class Manipulator {
     })
 
     document.addEventListener("keyup", (e) => {
+
       switch (e.keyCode) {
         case 77:
         case 82:
           this.setMode("Select");
           break;
+
+        case 107:
+          this.zoom *= 2;
+          this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
+          break;
+
+        case 109:
+          this.zoom *= 0.5;
+          this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
+          break;
+
+        case 33:
+          if (this.bone) {
+            this.svg.append(this.bone.img);
+          }
+          break;
+
+        case 34:
+          if (this.bone) {
+            this.svg.prepend(this.bone.img);
+          }
+
       }
+
     });
 
     document.addEventListener("mousedown", (e) => {
-      if (this.bone == null) return;
+      let m = this.getMousePos(e);
+
+      if (this.bone == null) {
+        this.startPos = {
+          "x": this.panX,
+          "y": this.panY,
+          "mx": m.x,
+          "my": m.y,
+        }
+        return;
+      }
 
       switch (this.mode) {
         case "Move":
         case "Rotate":
-          var mx = e.pageX;
-          var my = e.pageY;
+          var mx = m.x;
+          var my = m.y;
           var x = this.bone.x;
           var y = this.bone.y;
           var a = this.bone.a;
@@ -87,8 +132,8 @@ class Manipulator {
             "x": x,
             "y": y,
             "a": a,
-            "mx" : e.pageX,
-            "my" : e.pageY,
+            "mx" : mx,
+            "my" : my,
             "ma" : ma
           }
 
@@ -97,24 +142,28 @@ class Manipulator {
     });
 
     document.addEventListener("mouseup", (e) => {
-      if (this.bone == null) return;
-
-      switch (this.mode) {
-        case "Move":
-        case "Rotate":
-          this.startPos = null;
-          break;
-      }
+      this.startPos = null;
     });
 
     document.addEventListener("mousemove", (e) => {
       if (this.startPos == null) return;
-      if (this.bone == null) return;
+
+      let m = this.getMousePos(e);
+
+      if (this.bone == null) {
+        let dx = (m.x - this.startPos.mx) * this.zoom;
+        let dy = (m.y - this.startPos.my) * this.zoom;
+        this.panX = this.startPos.x + dx;
+        this.panY = this.startPos.y + dy;
+        console.log(`${this.panX}, ${this.panY} - ${dx}, ${dy}`)
+        this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
+        return;
+      }
 
       switch (this.mode) {
         case "Move":
-          var mx = e.pageX;
-          var my = e.pageY;
+          var mx = m.x;
+          var my = m.y;
           var dx = mx - this.startPos.mx;
           var dy = my - this.startPos.my;
           var x = this.startPos.x + dx;
@@ -125,8 +174,8 @@ class Manipulator {
           break;
 
         case "Rotate":
-          var mx = e.pageX;
-          var my = e.pageY;
+          var mx = m.x;
+          var my = m.y;
           var dx = mx - this.startPos.mx;
           var dy = my - this.startPos.my;
 
@@ -154,12 +203,13 @@ class Manipulator {
           }
 
           this.bone = null;
+          let pos = this.getMousePos(e);
 
           for (let bone of this.bones) {
-            let hit = (e.pageX > bone.x &&
-                       e.pageX < bone.x + bone.width &&
-                       e.pageY > bone.y &&
-                       e.pageY < bone.y + bone.height);
+            let hit = (pos.x > bone.x &&
+                       pos.x < bone.x + bone.width &&
+                       pos.y > bone.y &&
+                       pos.y < bone.y + bone.height);
              if (hit) {
                this.bone = bone;
                this.bone.selected = true;
@@ -178,6 +228,7 @@ class Manipulator {
 function start(assets) {
 
   var s = Snap("#canvas");
+  s.transform("translate(400, 300) scale(1, 1)");
 
   function createBone(path, x, y) {
     var asset = assets[path];
@@ -195,10 +246,14 @@ function start(assets) {
   }
 
   let bones = [];
-  bones.push(createBone("dude/head.png", 400, 300));
-  bones.push(createBone("dude/body.png", 200, 300));
+  bones.push(createBone("dude/arm.png", 100 - 400, 0));
+  bones.push(createBone("dude/body.png", 200 - 400, 0));
+  bones.push(createBone("dude/foot.png", 300 - 400, 0));
+  bones.push(createBone("dude/hand.png", 400 - 400, 0));
+  bones.push(createBone("dude/head.png", 500 - 400, 0));
+  bones.push(createBone("dude/leg.png", 600 - 400, 0));
 
-  var manipulator = new Manipulator(bones);
+  var manipulator = new Manipulator(s, bones);
   manipulator.init();
 }
 
