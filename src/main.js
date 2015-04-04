@@ -1,3 +1,23 @@
+var SVG = require("svg.js")
+
+var svg = SVG('canvas').size(800, 600);
+
+var root = svg.group();
+root.translate(200, 300);
+
+
+
+var img = svg.image("dude/body.png").loaded(function(e){
+  this.size(e.width, e.height);
+  this.rotate(90, img.x() + 0.5 * img.width(), img.y() + 0.5 * img.height());
+});
+root.add(img);
+
+
+
+
+/*
+
 import Preloader from "./Preloader"
 
 var preloader = new Preloader([
@@ -233,6 +253,8 @@ class Manipulator {
     });
 
     document.addEventListener("click", (e) => {
+      console.log(e.target);
+
       switch (this.mode) {
         case "Select":
           if (this.bone) {
@@ -300,3 +322,4 @@ function start(assets) {
 }
 
 preloader.load(start);
+*/
