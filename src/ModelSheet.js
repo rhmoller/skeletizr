@@ -4,6 +4,7 @@ export default class ModelSheet {
 
   constructor(assets) {
     var svg = SVG('canvas').size(800, 600);
+    svg.style({ "user-select" : "none"});
     var root = svg.group();
     root.translate(400, 300);
 

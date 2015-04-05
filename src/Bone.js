@@ -2,6 +2,8 @@ export default class Bone {
 
   constructor(sheet, asset, width, height) {
     var shape = sheet.svg.image(asset, width, height);
+    shape.style({ "user-select" : "none" });
+
     var group = sheet.svg.group();//.move(-0.5 * asset.width, -0.5 * asset.height);
 
     shape.addTo(sheet.layers);
