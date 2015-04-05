@@ -37,7 +37,6 @@ export default class Manipulator {
       var y = this.bone.y;
       var a = this.bone.a;
       var ma = this.getAngleFromMouseToBone(e, this.bone);
-
       this.startPos = {
             "x": x,
             "y": y,
@@ -94,9 +93,8 @@ export default class Manipulator {
           var a = this.startPos.a + da;
           this.bone.a = a;
           this.bone.apply();
-
           break;
-
+          
       }
 
       document.addEventListener("keyup", (e) => {
