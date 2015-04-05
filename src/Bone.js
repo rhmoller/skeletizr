@@ -15,7 +15,7 @@ export default class Bone {
     this.y = 0;
     this.a = 0;
     this.pivotX = 0.5 * width;
-    this.pivotY = 0.5 * height;
+    this.pivotY = 0.0 * height;
   }
 
   setParent(parent) {
@@ -23,9 +23,14 @@ export default class Bone {
   }
 
   apply() {
+    /*
     this.group
       .translate(this.x, this.y)
       .rotate(this.a, this.x + this.pivotX, this.y + this.pivotY);
+*/
+      this.group
+        .translate(this.x - this.pivotX, this.y - this.pivotY)
+        .rotate(this.a, this.x, this.y);
   }
 
 }

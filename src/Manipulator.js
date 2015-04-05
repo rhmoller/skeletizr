@@ -31,20 +31,40 @@ export default class Manipulator {
         return;
       }
 
-      var mx = e.clientX - 400;
-      var my = e.clientY - 300;
-      var x = this.bone.x;
-      var y = this.bone.y;
-      var a = this.bone.a;
-      var ma = this.getAngleFromMouseToBone(e, this.bone);
-      this.startPos = {
+      switch (this.mode) {
+        case "Move":
+        case "Rotate":
+          var mx = e.clientX - 400;
+          var my = e.clientY - 300;
+          var x = this.bone.x;
+          var y = this.bone.y;
+          var a = this.bone.a;
+          var ma = this.getAngleFromMouseToBone(e, this.bone);
+          this.startPos = {
+                "x": x,
+                "y": y,
+                "a": a,
+                "mx" : mx,
+                "my" : my,
+                "ma" : ma
+              }
+          break;
+
+        case "Pivot":
+          var mx = e.clientX - 400;
+          var my = e.clientY - 300;
+          var x = this.bone.pivotX;
+          var y = this.bone.pivotY;
+
+          this.startPos = {
             "x": x,
             "y": y,
-            "a": a,
             "mx" : mx,
             "my" : my,
-            "ma" : ma
           }
+          break;
+      }
+
     });
 
     document.addEventListener("mouseup", (e) => {
@@ -62,9 +82,10 @@ export default class Manipulator {
       var my = e.clientY - 300;
       var ma = this.getAngleFromMouseToBone(e, this.bone);
 
+      let self = this;
+
       switch (this.mode) {
         case "Move":
-          let self = this;
           requestAnimationFrame(() => {
 
             var pt1 = self.bone.sheet.svg.node.createSVGPoint();
@@ -94,7 +115,31 @@ export default class Manipulator {
           this.bone.a = a;
           this.bone.apply();
           break;
-          
+
+        case "Pivot":
+            requestAnimationFrame(() => {
+              if (self.startPos == null) return;
+              var pt1 = self.bone.sheet.svg.node.createSVGPoint();
+              pt1.x = mx;
+              pt1.y = my;
+              var gpt1 = pt1.matrixTransform(self.bone.group.node.getTransformToElement(self.bone.sheet.root.node).inverse());
+
+              var pt2 = self.bone.sheet.svg.node.createSVGPoint();
+              pt2.x = self.startPos.mx;
+              pt2.y = self.startPos.my;
+              var gpt2 = pt2.matrixTransform(self.bone.group.node.getTransformToElement(self.bone.sheet.root.node).inverse());
+
+              var dx = gpt2.x - gpt1.x;
+              var dy = gpt2.y - gpt1.y;
+
+              self.bone.pivotX = self.startPos.x + dx;
+              self.bone.pivotY = self.startPos.y + dy;
+              self.bone.apply();
+
+              console.log(`bone pivot ${self.bone.pivotX}, ${self.bone.pivotY}`);
+            });
+
+          break;
       }
 
       document.addEventListener("keyup", (e) => {
