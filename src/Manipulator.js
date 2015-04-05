@@ -214,7 +214,7 @@ export default class Manipulator {
       }
     });
 
-    document.addEventListener("keyup", (e) => {
+    document.addEventListener("keypress", (e) => {
       switch (e.keyCode) {
         case 77:
           this.setMode("Move");
@@ -222,10 +222,23 @@ export default class Manipulator {
         case 82:
           this.setMode("Rotate");
           break;
-
         case 80:
           this.setMode("Pivot");
           break;
+
+          case 33:
+            if (this.bone) {
+              this.bone.group.backward();
+              e.preventDefault();
+            }
+            break;
+
+          case 34:
+            if (this.bone) {
+              this.bone.group.forward();
+              e.preventDefault();
+            }
+            break;
       }
 
     });
