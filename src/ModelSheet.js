@@ -10,6 +10,8 @@ export default class ModelSheet {
     this.svg = svg;
     this.root = root;
     this.assets = assets;
+    this.layers = svg.group();
+    this.layers.addTo(root);
   }
 
   createBone(imgPath) {

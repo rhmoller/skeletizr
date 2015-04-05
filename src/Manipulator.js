@@ -228,15 +228,27 @@ export default class Manipulator {
 
           case 33:
             if (this.bone) {
-              this.bone.group.backward();
+              this.bone.shape.forward();
             }
             break;
 
           case 34:
             if (this.bone) {
-              this.bone.group.forward();
+              this.bone.shape.backward();
             }
             break;
+
+          case 35:
+            if (this.bone) {
+              this.bone.shape.back();
+            }
+            break;
+
+            case 36:
+              if (this.bone) {
+                this.bone.shape.front();
+              }
+              break;
       }
 
     });
