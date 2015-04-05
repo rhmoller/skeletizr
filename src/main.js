@@ -14,7 +14,7 @@ var preloader = new Preloader([
 class Bone {
 
   constructor(sheet, asset, width, height) {
-    var s1 = sheet.svg.image("dude/body.png", asset.width, asset.height);
+    var s1 = sheet.svg.image(asset, width, height);
     var g1 = sheet.svg.group();//.move(-0.5 * asset.width, -0.5 * asset.height);
 
     s1.addTo(g1);
@@ -189,11 +189,19 @@ preloader.load(function (assets) {
   var sheet = new ModelSheet(assets);
 
   var bone1 = sheet.createBone("dude/body.png");
-  var bone2 = sheet.createBone("dude/body.png");
-  var bone3 = sheet.createBone("dude/body.png");
 
+  var bone2 = sheet.createBone("dude/arm.png");
+  var bone3 = sheet.createBone("dude/hand.png");
   bone3.setParent(bone2);
   bone2.setParent(bone1);
+
+  var bone4 = sheet.createBone("dude/head.png");
+  bone4.setParent(bone1);
+
+  var bone5 = sheet.createBone("dude/leg.png");
+  var bone6 = sheet.createBone("dude/foot.png");
+  bone6.setParent(bone5);
+  bone5.setParent(bone1);
 
   bone2.x = 100; bone2.apply();
   bone3.x = 100; bone3.apply();
@@ -218,6 +226,9 @@ preloader.load(function (assets) {
       if (bone1.group === g) manipulator.select(bone1);
       if (bone2.group === g) manipulator.select(bone2);
       if (bone3.group === g) manipulator.select(bone3);
+      if (bone4.group === g) manipulator.select(bone4);
+      if (bone5.group === g) manipulator.select(bone5);
+      if (bone6.group === g) manipulator.select(bone6);
     }
   });
 
