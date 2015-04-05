@@ -2,8 +2,8 @@ import Bone from "./Bone";
 
 export default class Manipulator {
 
-  constructor(sheet) {
-    this.mode = "Rotate";
+  constructor(sheet, bones) {
+    this.mode = "Select";
     this.addListeners();
     this.sheet = sheet;
 
@@ -14,8 +14,12 @@ export default class Manipulator {
     this.overlay.attr("pointer-events", "none");
 
     this.pivotPoint = sheet.svg.circle(5);
-    this.pivotPoint.stroke("red").fill("red");
+    this.pivotPoint.fill("red");
     this.pivotPoint.addTo(sheet.root);
+
+    this.bones = bones;
+    this.bone = null;
+    this.manipulated = false;
   }
 
   select(bone) {
@@ -24,19 +28,28 @@ export default class Manipulator {
   }
 
   updateOverlay() {
-    var tx = this.bone.group.node.getTransformToElement(this.sheet.root.node);
-    var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
-    console.log("tx: " + txs);
-    this.overlay.transform("matrix", txs);
-    this.overlay.width(this.bone.width);
-    this.overlay.height(this.bone.height);
+    if (this.bone != null) {
+      var tx = this.bone.group.node.getTransformToElement(this.sheet.root.node);
+      var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
+      console.log("tx: " + txs);
+      this.overlay.transform("matrix", txs);
+      this.overlay.width(this.bone.width);
+      this.overlay.height(this.bone.height);
 
-    this.pivotPoint.transform("matrix", txs);
-    this.pivotPoint.center(this.bone.pivotX, this.bone.pivotY);
+      this.pivotPoint.transform("matrix", txs);
+      this.pivotPoint.center(this.bone.pivotX, this.bone.pivotY);
+
+      this.overlay.stroke("blue")
+      this.pivotPoint.fill("red");
+    } else {
+      this.overlay.stroke("transparent")
+      this.pivotPoint.fill("transparent");
+    }
 
   }
 
   setMode(mode) {
+    document.getElementById("mode").innerHTML = mode;
     this.mode = mode;
   }
 
@@ -52,6 +65,8 @@ export default class Manipulator {
   addListeners() {
 
     document.addEventListener("mousedown", (e) => {
+      this.manipulated = false;
+
       if (this.bone == null) {
         return;
       }
@@ -93,6 +108,31 @@ export default class Manipulator {
     });
 
     document.addEventListener("mouseup", (e) => {
+      if (!this.manipulated) {
+        let t = e.target;
+        if (t.instance == this.sheet.svg || t.instance == this.sheet.root) {
+          this.select(null);
+          this.startPos = null;
+          return;
+        }
+        console.log(t.instance);
+
+        let g = e.target.instance.parent;
+        console.log(g);
+        if (g.type == "g") {
+          for (let bone of this.bones) {
+            if (bone.group === g) {
+              this.select(bone);
+              this.startPos = null;
+              return;
+            }
+          }
+        }
+
+        this.select(null);
+      }
+
+
       this.startPos = null;
     });
 
@@ -102,6 +142,8 @@ export default class Manipulator {
       if (this.bone == null) {
         return;
       }
+
+      this.manipulated = true;
 
       var mx = e.clientX - 400;
       var my = e.clientY - 300;
@@ -170,24 +212,24 @@ export default class Manipulator {
 
           break;
       }
+    });
 
-      document.addEventListener("keyup", (e) => {
-        switch (e.keyCode) {
-          case 77:
-            this.setMode("Move");
-            break;
-          case 82:
-            this.setMode("Rotate");
-            break;
+    document.addEventListener("keyup", (e) => {
+      switch (e.keyCode) {
+        case 77:
+          this.setMode("Move");
+          break;
+        case 82:
+          this.setMode("Rotate");
+          break;
 
-          case 80:
-            this.setMode("Pivot");
-            break;
-        }
-
-      });
+        case 80:
+          this.setMode("Pivot");
+          break;
+      }
 
     });
+
   }
 
 }

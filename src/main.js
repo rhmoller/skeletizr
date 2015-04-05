@@ -35,23 +35,15 @@ preloader.load(function (assets) {
   bone2.x = 100; bone2.apply();
   bone3.x = 100; bone3.apply();
 
-  var manipulator = new Manipulator(sheet);
+  var bones = [];
+  bones.push(bone1);
+  bones.push(bone2);
+  bones.push(bone3);
+  bones.push(bone4);
+  bones.push(bone5);
+  bones.push(bone6);
+
+  var manipulator = new Manipulator(sheet, bones);
   manipulator.select(bone1);
 
-  sheet.svg.click((e) => {
-    let t = e.target;
-    if (t.instance == sheet.svg || t.instance == sheet.root) return;
-    console.log(t.instance);
-
-    let g = e.target.instance.parent;
-    console.log(g);
-    if (g.type == "g") {
-      if (bone1.group === g) manipulator.select(bone1);
-      if (bone2.group === g) manipulator.select(bone2);
-      if (bone3.group === g) manipulator.select(bone3);
-      if (bone4.group === g) manipulator.select(bone4);
-      if (bone5.group === g) manipulator.select(bone5);
-      if (bone6.group === g) manipulator.select(bone6);
-    }
-  });
 });
