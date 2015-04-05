@@ -16,6 +16,8 @@ export default class Bone {
     this.a = 0;
     this.pivotX = 0.5 * width;
     this.pivotY = 0.0 * height;
+    this.width = width;
+    this.height = height;
   }
 
   setParent(parent) {

@@ -2,13 +2,38 @@ import Bone from "./Bone";
 
 export default class Manipulator {
 
-  constructor() {
+  constructor(sheet) {
     this.mode = "Rotate";
     this.addListeners();
+    this.sheet = sheet;
+
+    this.overlay = sheet.svg.rect(200, 200);
+    this.overlay.stroke("blue");
+    this.overlay.fill("transparent");
+    this.overlay.addTo(sheet.root);
+    this.overlay.attr("pointer-events", "none");
+
+    this.pivotPoint = sheet.svg.circle(5);
+    this.pivotPoint.stroke("red").fill("red");
+    this.pivotPoint.addTo(sheet.root);
   }
 
   select(bone) {
       this.bone = bone;
+      this.updateOverlay();
+  }
+
+  updateOverlay() {
+    var tx = this.bone.group.node.getTransformToElement(this.sheet.root.node);
+    var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
+    console.log("tx: " + txs);
+    this.overlay.transform("matrix", txs);
+    this.overlay.width(this.bone.width);
+    this.overlay.height(this.bone.height);
+
+    this.pivotPoint.transform("matrix", txs);
+    this.pivotPoint.center(this.bone.pivotX, this.bone.pivotY);
+
   }
 
   setMode(mode) {
@@ -87,6 +112,7 @@ export default class Manipulator {
       switch (this.mode) {
         case "Move":
           requestAnimationFrame(() => {
+            if (self.startPos == null) return;
 
             var pt1 = self.bone.sheet.svg.node.createSVGPoint();
             pt1.x = mx;
@@ -106,6 +132,7 @@ export default class Manipulator {
             self.bone.x = x;
             self.bone.y = y;
             self.bone.apply();
+            self.updateOverlay();
           });
           break;
 
@@ -114,6 +141,7 @@ export default class Manipulator {
           var a = this.startPos.a + da;
           this.bone.a = a;
           this.bone.apply();
+          this.updateOverlay();
           break;
 
         case "Pivot":
@@ -135,6 +163,7 @@ export default class Manipulator {
               self.bone.pivotX = self.startPos.x + dx;
               self.bone.pivotY = self.startPos.y + dy;
               self.bone.apply();
+              self.updateOverlay();
 
               console.log(`bone pivot ${self.bone.pivotX}, ${self.bone.pivotY}`);
             });

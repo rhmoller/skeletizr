@@ -35,7 +35,7 @@ preloader.load(function (assets) {
   bone2.x = 100; bone2.apply();
   bone3.x = 100; bone3.apply();
 
-  var manipulator = new Manipulator();
+  var manipulator = new Manipulator(sheet);
   manipulator.select(bone1);
 
   sheet.svg.click((e) => {
