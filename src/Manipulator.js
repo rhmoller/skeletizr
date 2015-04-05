@@ -3,7 +3,7 @@ import Bone from "./Bone";
 export default class Manipulator {
 
   constructor(sheet, bones) {
-    this.mode = "Select";
+    this.setMode("Select");
     this.addListeners();
     this.sheet = sheet;
 
@@ -31,7 +31,7 @@ export default class Manipulator {
     if (this.bone != null) {
       var tx = this.bone.group.node.getTransformToElement(this.sheet.root.node);
       var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
-      console.log("tx: " + txs);
+
       this.overlay.transform("matrix", txs);
       this.overlay.width(this.bone.width);
       this.overlay.height(this.bone.height);
@@ -115,10 +115,10 @@ export default class Manipulator {
           this.startPos = null;
           return;
         }
-        console.log(t.instance);
+
 
         let g = e.target.instance.parent;
-        console.log(g);
+
         if (g.type == "g") {
           for (let bone of this.bones) {
             if (bone.group === g) {
@@ -207,14 +207,14 @@ export default class Manipulator {
               self.bone.apply();
               self.updateOverlay();
 
-              console.log(`bone pivot ${self.bone.pivotX}, ${self.bone.pivotY}`);
+
             });
 
           break;
       }
     });
 
-    document.addEventListener("keypress", (e) => {
+    document.addEventListener("keyup", (e) => {
       switch (e.keyCode) {
         case 77:
           this.setMode("Move");
@@ -229,14 +229,12 @@ export default class Manipulator {
           case 33:
             if (this.bone) {
               this.bone.group.backward();
-              e.preventDefault();
             }
             break;
 
           case 34:
             if (this.bone) {
               this.bone.group.forward();
-              e.preventDefault();
             }
             break;
       }
