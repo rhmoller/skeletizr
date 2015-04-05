@@ -15,6 +15,15 @@ export default class Manipulator {
     this.mode = mode;
   }
 
+  getAngleFromMouseToBone(mouseEvent, bone) {
+    var mx = mouseEvent.clientX - 400;
+    var my = mouseEvent.clientY - 300;
+    var ma = Math.atan2(bone.x + bone.pivotX - mx, this.bone.y + this.bone.pivotY - my);
+    if (ma < 0) ma += 2.0 * Math.PI
+    ma *= -180 / Math.PI;
+    return ma;
+  }
+
   addListeners() {
 
     document.addEventListener("mousedown", (e) => {
@@ -27,9 +36,7 @@ export default class Manipulator {
       var x = this.bone.x;
       var y = this.bone.y;
       var a = this.bone.a;
-      var ma = Math.atan2(this.bone.x + this.bone.pivotX - mx, this.bone.y + this.bone.pivotY - my);
-      if (ma < 0) ma += 2.0 * Math.PI
-      ma *= -180 / Math.PI;
+      var ma = this.getAngleFromMouseToBone(e, this.bone);
 
       this.startPos = {
             "x": x,
@@ -54,9 +61,7 @@ export default class Manipulator {
 
       var mx = e.clientX - 400;
       var my = e.clientY - 300;
-      var ma = Math.atan2(this.bone.x + this.bone.pivotX - mx, this.bone.y + this.bone.pivotY - my);
-      if (ma < 0) ma += 2.0 * Math.PI
-      ma *= -180 / Math.PI;
+      var ma = this.getAngleFromMouseToBone(e, this.bone);
 
       switch (this.mode) {
         case "Move":
