@@ -1,23 +1,5 @@
 var SVG = require("svg.js")
 
-var svg = SVG('canvas').size(800, 600);
-
-var root = svg.group();
-root.translate(200, 300);
-
-
-
-var img = svg.image("dude/body.png").loaded(function(e){
-  this.size(e.width, e.height);
-  this.rotate(90, img.x() + 0.5 * img.width(), img.y() + 0.5 * img.height());
-});
-root.add(img);
-
-
-
-
-/*
-
 import Preloader from "./Preloader"
 
 var preloader = new Preloader([
@@ -31,133 +13,94 @@ var preloader = new Preloader([
 
 class Bone {
 
-  constructor(img, width, height, rect, pivot, px, py) {
-    this.img = img;
-    this.width = width;
-    this.height = height;
+  constructor(sheet, asset, width, height) {
+    var s1 = sheet.svg.image("dude/body.png", asset.width, asset.height);
+    var g1 = sheet.svg.group();//.move(-0.5 * asset.width, -0.5 * asset.height);
+
+    s1.addTo(g1);
+    g1.addTo(sheet.root);
+
+    this.sheet = sheet;
+    this.shape = s1;
+    this.group = g1;
+
     this.x = 0;
     this.y = 0;
     this.a = 0;
-    this.rect = rect;
-    this.pivot = pivot;
-    this.pivotX = px;
-    this.pivotY = py;
-    this.selected = false;
+    this.pivotX = 0.5 * width;
+    this.pivotY = 0.5 * height;
+
+    //this.group.data("bone", this);
+  }
+
+  setParent(parent) {
+    this.group.addTo(parent.group);
   }
 
   apply() {
-    let tx = `translate(${this.x} ${this.y}) rotate(${this.a} ${this.pivotX} ${this.pivotY})`
-    this.img.transform(tx);
-    this.rect.transform(tx);
+    this.group
+      .translate(this.x, this.y)
+      .rotate(this.a, this.x + this.pivotX, this.y + this.pivotY);
+  }
 
-    this.pivot.transform(`translate(${this.x + this.pivotX} ${this.y + this.pivotY})`);
+}
 
-    this.rect.attr({"stroke": this.selected ? "blue" : "transparent"});
-    this.pivot.attr({"stroke": this.selected ? "blue" : "transparent"});
+class ModelSheet {
+
+  constructor(assets) {
+    var svg = SVG('canvas').size(800, 600);
+    var root = svg.group();
+    root.translate(400, 300);
+
+    var mouseLine = svg.line(0, 0, 400, 300).stroke({ width: 1, color: "#f00" });
+    mouseLine.addTo(root);
+
+    this.svg = svg;
+    this.root = root;
+    this.assets = assets;
+  }
+
+  createBone(imgPath) {
+    var asset = this.assets[imgPath];
+    var bone = new Bone(this, imgPath, asset.width, asset.height);
+    bone.group.addTo(this.root);
+    return bone;
   }
 
 }
 
 class Manipulator {
 
-  constructor(svg, bones) {
-    this.svg = svg;
-    this.bones = bones,
-    this.bone = null;
-    this.mode = "Select";
-    this.modeStatus = document.getElementById("mode");
-    this.startPos = null;
-    this.zoom = 1;
-    this.panX = 400;
-    this.panY = 300;
+  constructor() {
+    this.mode = "Rotate";
+    this.addListeners();
+  }
+
+  select(bone) {
+      this.bone = bone;
   }
 
   setMode(mode) {
     this.mode = mode;
-    this.modeStatus.innerHTML = mode;
   }
 
-  getMousePos(e) {
-    return {
-      "x": (e.pageX - this.panX) / this.zoom,
-      "y": (e.pageY - this.panY) / this.zoom
-    }
-  }
-
-  init() {
-    document.addEventListener("keydown", (e) => {
-      switch (e.keyCode) {
-        case 77:
-          this.setMode("Move");
-          break;
-        case 82:
-          this.setMode("Rotate");
-          break;
-
-        case 80:
-          this.setMode("Pivot");
-          break;
-      }
-    })
-
-    document.addEventListener("keyup", (e) => {
-
-      switch (e.keyCode) {
-        case 77:
-        case 82:
-        case 80:
-          this.setMode("Select");
-          break;
-
-        case 107:
-          this.zoom *= 2;
-          this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
-          break;
-
-        case 109:
-          this.zoom *= 0.5;
-          this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
-          break;
-
-        case 33:
-          if (this.bone) {
-            this.svg.append(this.bone.img);
-          }
-          break;
-
-        case 34:
-          if (this.bone) {
-            this.svg.prepend(this.bone.img);
-          }
-
-      }
-
-    });
+  addListeners() {
 
     document.addEventListener("mousedown", (e) => {
-      let m = this.getMousePos(e);
-
       if (this.bone == null) {
-        this.startPos = {
-          "x": this.panX,
-          "y": this.panY,
-          "mx": m.x,
-          "my": m.y,
-        }
         return;
       }
 
-      switch (this.mode) {
-        case "Move":
-        case "Rotate":
-          var mx = m.x;
-          var my = m.y;
-          var x = this.bone.x;
-          var y = this.bone.y;
-          var a = this.bone.a;
-          var ma = Snap.angle(x + this.bone.pivotX, y + this.bone.pivotY, mx, my);
+      var mx = e.clientX - 400;
+      var my = e.clientY - 300;
+      var x = this.bone.x;
+      var y = this.bone.y;
+      var a = this.bone.a;
+      var ma = Math.atan2(this.bone.x + this.bone.pivotX - mx, this.bone.y + this.bone.pivotY - my);
+      if (ma < 0) ma += 2.0 * Math.PI
+      ma *= -180 / Math.PI;
 
-          this.startPos = {
+      this.startPos = {
             "x": x,
             "y": y,
             "a": a,
@@ -165,24 +108,6 @@ class Manipulator {
             "my" : my,
             "ma" : ma
           }
-
-          break;
-
-        case "Pivot":
-          var mx = m.x;
-          var my = m.y;
-          var x = this.bone.pivotX;
-          var y = this.bone.pivotY;
-
-          this.startPos = {
-            "x": x,
-            "y": y,
-            "mx" : mx,
-            "my" : my,
-          }
-
-          break;
-      }
     });
 
     document.addEventListener("mouseup", (e) => {
@@ -192,134 +117,170 @@ class Manipulator {
     document.addEventListener("mousemove", (e) => {
       if (this.startPos == null) return;
 
-
       if (this.bone == null) {
-        // cannot use getMousePos() because it shifts origin when panning, so the delta gets wrong
-        let m = {
-          "x": (e.pageX - this.startPos.x) / this.zoom,
-          "y": (e.pageY - this.startPos.y) / this.zoom
-        };
-
-        let dx = (m.x - this.startPos.mx) * this.zoom;
-        let dy = (m.y - this.startPos.my) * this.zoom;
-        this.panX = this.startPos.x + dx;
-        this.panY = this.startPos.y + dy;
-        this.svg.transform(`translate(${this.panX}, ${this.panY}) scale(${this.zoom}, ${this.zoom})`);
         return;
       }
 
-      let m = this.getMousePos(e);
+      var mx = e.clientX - 400;
+      var my = e.clientY - 300;
+      var ma = Math.atan2(this.bone.x + this.bone.pivotX - mx, this.bone.y + this.bone.pivotY - my);
+      if (ma < 0) ma += 2.0 * Math.PI
+      ma *= -180 / Math.PI;
 
       switch (this.mode) {
         case "Move":
-          var mx = m.x;
-          var my = m.y;
-          var dx = mx - this.startPos.mx;
-          var dy = my - this.startPos.my;
-          var x = this.startPos.x + dx;
-          var y = this.startPos.y + dy;
-          this.bone.x = x;
-          this.bone.y = y;
-          this.bone.apply();
+          let self = this;
+          requestAnimationFrame(() => {
+
+            var pt1 = self.bone.sheet.svg.node.createSVGPoint();
+            pt1.x = mx;
+            pt1.y = my;
+            var gpt1 = pt1.matrixTransform(self.bone.group.parent.node.getTransformToElement(self.bone.sheet.root.node).inverse());
+
+            var pt2 = self.bone.sheet.svg.node.createSVGPoint();
+            pt2.x = self.startPos.mx;
+            pt2.y = self.startPos.my;
+            var gpt2 = pt2.matrixTransform(self.bone.group.parent.node.getTransformToElement(self.bone.sheet.root.node).inverse());
+
+            var dx = gpt1.x - gpt2.x;
+            var dy = gpt1.y - gpt2.y;
+
+            var x = self.startPos.x + dx;
+            var y = self.startPos.y + dy;
+            self.bone.x = x;
+            self.bone.y = y;
+            self.bone.apply();
+          });
           break;
 
         case "Rotate":
-          var mx = m.x;
-          var my = m.y;
-          var dx = mx - this.startPos.mx;
-          var dy = my - this.startPos.my;
-
-          var ma = Snap.angle(this.startPos.x + this.bone.pivotX, this.startPos.y + this.bone.pivotY, mx, my);
           var da = ma - this.startPos.ma;
           var a = this.startPos.a + da;
-
           this.bone.a = a;
           this.bone.apply();
 
           break;
 
-        case "Pivot":
-          var mx = m.x;
-          var my = m.y;
-          var dx = mx - this.startPos.mx;
-          var dy = my - this.startPos.my;
-
-          this.bone.pivotX = this.startPos.x + dx;
-          this.bone.pivotY = this.startPos.y + dy;
-          this.bone.apply();
-          break;
       }
 
+      document.addEventListener("keyup", (e) => {
+        switch (e.keyCode) {
+          case 77:
+            this.setMode("Move");
+            break;
+          case 82:
+            this.setMode("Rotate");
+            break;
+
+          case 80:
+            this.setMode("Pivot");
+            break;
+        }
+
+      });
+
     });
-
-    document.addEventListener("click", (e) => {
-      console.log(e.target);
-
-      switch (this.mode) {
-        case "Select":
-          if (this.bone) {
-            this.bone.selected = false;
-            this.bone.apply();
-          }
-
-          this.bone = null;
-          let pos = this.getMousePos(e);
-
-          for (let bone of this.bones) {
-            let hit = (pos.x > bone.x &&
-                       pos.x < bone.x + bone.width &&
-                       pos.y > bone.y &&
-                       pos.y < bone.y + bone.height);
-             if (hit) {
-               this.bone = bone;
-               this.bone.selected = true;
-               this.bone.apply();
-             }
-          }
-          break;
-      }
-    });
-
   }
 
 }
 
 
-function start(assets) {
+preloader.load(function (assets) {
+  var sheet = new ModelSheet(assets);
 
-  var s = Snap("#canvas");
-  s.transform("translate(400, 300) scale(1, 1)");
+  var bone1 = sheet.createBone("dude/body.png");
+  var bone2 = sheet.createBone("dude/body.png");
+  var bone3 = sheet.createBone("dude/body.png");
 
-  function createBone(path, x, y) {
-    var asset = assets[path];
-    var img = s.image(path, 0, 0, asset.width, asset.height);
+  bone3.setParent(bone2);
+  bone2.setParent(bone1);
 
-    var rect = s.rect(0, 0, asset.width, asset.height);
-    rect.attr({"fill": "transparent", "stroke": "transparent", "strokeWidth": 2});
+  bone2.x = 100; bone2.apply();
+  bone3.x = 100; bone3.apply();
 
-    var pivot = s.circle(0, 0, 4);
-    pivot.attr({"fill": "transparent", "stroke": "transparent", "strokeWidth": 2});
+  var manipulator = new Manipulator();
+  manipulator.select(bone1);
 
-    var bone = new Bone(img, asset.width, asset.height, rect, pivot, 0.5 * asset.width, 0.5 * asset.height);
-    bone.x = x;
-    bone.y = y;
-    bone.a = 0;
-    bone.apply();
+  //bone1.group.click((e) => { manipulator.select(bone1); });
+  //bone2.group.click((e) => { manipulator.select(bone2); });
+  //bone3.group.click((e) => { manipulator.select(bone3); });
 
-    return bone;
+  console.log("This is new");
+  sheet.svg.click((e) => {
+    let t = e.target;
+    if (t.instance == sheet.svg || t.instance == sheet.root) return;
+    console.log(t.instance);
+
+    let g = e.target.instance.parent;
+    console.log(g);
+    if (g.type == "g") {
+      console.log("select " + g);
+      if (bone1.group === g) manipulator.select(bone1);
+      if (bone2.group === g) manipulator.select(bone2);
+      if (bone3.group === g) manipulator.select(bone3);
+    }
+  });
+
+/*
+  s1.addTo(g1);
+
+  var s2 = svg.image("dude/body.png", asset.width, asset.height);
+  var g2 = svg.group();//.move(-0.5 * asset.width, -0.5 * asset.height);
+  g2.translate(150, 0);
+  g2.rotate(45, 150 + 0.5 * asset.width, 0.5 * asset.height);
+  g2.addTo(g1);
+  s2.addTo(g2);
+
+  var s3 = svg.image("dude/body.png", asset.width, asset.height);
+  var g3 = svg.group();//.move(-0.5 * asset.width, -0.5 * asset.height);
+  g3.translate(150, 0);
+  g3.rotate(45, 150 + 0.5 * asset.width, 0.5 * asset.height);
+  g3.addTo(g2);
+  s3.addTo(g3);
+
+  var overlay = svg.rect(asset.width, asset.height);
+  overlay.stroke("#f00").fill("transparent");
+  overlay.addTo(g1);
+
+  mouseLine.addTo(root);
+
+  function clickr(e) {
+    var img = e.target.instance;
+
+    var pt = svg.node.createSVGPoint();
+    pt.x = img.x() + 0.5 * asset.width;
+    pt.y = img.y() + 0.5 * asset.height;
+    var gpt = pt.matrixTransform(img.node.getTransformToElement(svg.node));
+    console.log(`transformed ${gpt.x}, ${gpt.y}`);
+
+    mouseLine.plot(gpt.x -400, gpt.y - 300, 0, 0);
+    overlay.addTo(img.parent);
+    overlay.front();
   }
 
-  let bones = [];
-  bones.push(createBone("dude/arm.png", 100 - 400, 0));
-  bones.push(createBone("dude/body.png", 200 - 400, 0));
-  bones.push(createBone("dude/foot.png", 300 - 400, 0));
-  bones.push(createBone("dude/hand.png", 400 - 400, 0));
-  bones.push(createBone("dude/head.png", 500 - 400, 0));
-  bones.push(createBone("dude/leg.png", 600 - 400, 0));
+  g1.click(clickr);
+  g2.click(clickr);
+  g3.click(clickr);
+*/
+});
 
-  var manipulator = new Manipulator(s, bones);
-  manipulator.init();
-}
 
-preloader.load(start);
+/*
+var img = svg.image("dude/body.png");
+
+var bone = svg.group();
+bone.add(img);
+root.add(bone);
+
+img.rotate(45, 0.5 * img.width(), 0.5 * img.height());
+
+svg.click(function (e) {
+  var img = e.target;
+  var bone = img.instance.parent;
+  var bbox = bone.rbox();
+  var overlay = svg.rect(bbox.width, bbox.height);
+  overlay.fill("transparent").stroke("#f00");
+  bone.add(overlay);
+});
+
 */
