@@ -7,9 +7,6 @@ export default class ModelSheet {
     var root = svg.group();
     root.translate(400, 300);
 
-    var mouseLine = svg.line(0, 0, 400, 300).stroke({ width: 1, color: "#f00" });
-    mouseLine.addTo(root);
-
     this.svg = svg;
     this.root = root;
     this.assets = assets;
