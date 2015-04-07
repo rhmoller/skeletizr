@@ -30,6 +30,7 @@ export default class Bone {
   setParent(parent) {
     parent.children.add(this);
     this.group.addTo(parent.group);
+    this.apply();
   }
 
   apply() {

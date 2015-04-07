@@ -225,9 +225,13 @@ export default class Manipulator {
         case 80:
           this.setMode("Pivot");
           break;
-          
+
+
         case 68:
-          this.sheet.dump();
+          this.sheet.add();
+          break;
+        case 83:
+          this.sheet.save();
           break;
         case 37:
           this.sheet.prev();

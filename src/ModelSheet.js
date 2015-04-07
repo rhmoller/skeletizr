@@ -4,7 +4,10 @@ export default class ModelSheet {
 
   constructor(assets) {
     var svg = SVG('canvas').size(800, 600);
-    svg.style({ "user-select" : "none"});
+    svg.style({
+       "-user-select" : "none",
+       "-webkit-user-select" : "none",
+    });
     var root = svg.group();
     root.translate(400, 300);
 
@@ -28,7 +31,7 @@ export default class ModelSheet {
     return bone;
   }
 
-  dump() {
+  add() {
     var pose = [];
     for (let bone of this.bones) {
       let bp = {
@@ -39,7 +42,37 @@ export default class ModelSheet {
       pose.push(bp);
     }
     console.log("Stored key frame " + this.keyframes.length);
+    console.log(JSON.stringify(pose));
     this.keyframes.push(pose);
+  }
+
+  save() {
+    if (this.keyframes.length == 0) this.add();
+    var pose = [];
+    for (let bone of this.bones) {
+      let bp = {
+        "x": bone.x,
+        "y": bone.y,
+        "a": bone.a
+      }
+      pose.push(bp);
+    }
+    console.log("Stored key frame " + this.frame);
+    console.log(JSON.stringify(pose));
+    this.keyframes[this.frame] = pose;
+  }
+
+  load() {
+    let pose = this.keyframes[this.frame];
+    for (let i = 0; i < pose.length; i++) {
+      let bone = this.bones[i];
+      let bp = pose[i];
+      bone.x = bp.x;
+      bone.y = bp.y;
+      bone.a = bp.a;
+      bone.apply();
+    }
+    console.log("Loaded key frame " + this.frame);
   }
 
   next() {
@@ -56,17 +89,5 @@ export default class ModelSheet {
     this.load();
   }
 
-  load() {
-    let pose = this.keyframes[this.frame];
-    for (let i = 0; i < pose.length; i++) {
-      let bone = this.bones[i];
-      let bp = pose[i];
-      bone.x = bp.x;
-      bone.y = bp.y;
-      bone.a = bp.a;
-      bone.apply();
-    }
-    console.log("Loaded key frame " + this.frame);
-  }
 
 }

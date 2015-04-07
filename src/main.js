@@ -1,3 +1,21 @@
+/*
+ * Skeletizr
+ * a bare bones 2D animation tool
+ * by Rene Hangstrup Møller
+ *
+ * Released under a MIT License
+ *
+ * TODO: save to file
+ * TODO: load from file
+ * TODO: keyframe interpolation
+ * TODO: remove bone
+ * TODO: reparent bones
+ * TODO: image library
+ * TODO: add bone
+ * TODO: zoom and pan
+ * TODO: skeleton treeview
+ * TODO: swap image
+ */
 var SVG = require("svg.js")
 
 import Preloader from "./Preloader";
@@ -32,6 +50,16 @@ preloader.load(function (assets) {
   bone6.setParent(bone5);
   bone5.setParent(bone1);
 
+  var bone7 = sheet.createBone("dude/arm.png");
+  var bone8 = sheet.createBone("dude/hand.png");
+  bone8.setParent(bone7);
+  bone7.setParent(bone1);
+
+  var bone10 = sheet.createBone("dude/leg.png");
+  var bone11 = sheet.createBone("dude/foot.png");
+  bone11.setParent(bone10);
+  bone10.setParent(bone1);
+
   bone2.x = 100; bone2.apply();
   bone3.x = 100; bone3.apply();
 
@@ -42,6 +70,10 @@ preloader.load(function (assets) {
   bones.push(bone4);
   bones.push(bone5);
   bones.push(bone6);
+  bones.push(bone7);
+  bones.push(bone8);
+  bones.push(bone10);
+  bones.push(bone11);
 
   var manipulator = new Manipulator(sheet, bones);
   manipulator.select(bone1);
