@@ -1,5 +1,16 @@
 {
-  "name": "bigbone",
+  "name": "skeletizr",
+  "description": "Minimalistic 2D animation tool",
+  "version": "0.0.1",
+  "author": "Rene Hangstrup Møller (http://giddyplanet.com)",
+  "keywords": ["2d", "animation", "bones", "cutout"],
+  "repository": "rhmoller/skeletizr",
+  "license": "MIT",
+
+  "scripts": {
+    "start": "gulp"
+  },
+
   "devDependencies": {
     "babelify": "^5.0.4",
     "browser-sync": "^2.5.2",
@@ -8,6 +19,7 @@
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.1.0"
   },
+
   "dependencies": {
     "svg.js": "^1.0.0"
   }
