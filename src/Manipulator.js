@@ -4,7 +4,6 @@ export default class Manipulator {
 
   constructor(sheet, bones) {
     this.setMode("Select");
-    this.addListeners();
     this.sheet = sheet;
 
     this.overlay = sheet.svg.rect(200, 200);
@@ -20,6 +19,7 @@ export default class Manipulator {
     this.bones = bones;
     this.bone = null;
     this.manipulated = false;
+    this.addListeners();
   }
 
   select(bone) {
@@ -63,8 +63,9 @@ export default class Manipulator {
   }
 
   addListeners() {
+    let svg = this.sheet.svg.node;
 
-    document.addEventListener("mousedown", (e) => {
+    svg.addEventListener("mousedown", (e) => {
       this.manipulated = false;
 
       if (this.bone == null) {
@@ -107,7 +108,7 @@ export default class Manipulator {
 
     });
 
-    document.addEventListener("mouseup", (e) => {
+    svg.addEventListener("mouseup", (e) => {
       if (!this.manipulated) {
         let t = e.target;
         if (t.instance == this.sheet.svg || t.instance == this.sheet.root) {
@@ -136,7 +137,7 @@ export default class Manipulator {
       this.startPos = null;
     });
 
-    document.addEventListener("mousemove", (e) => {
+    svg.addEventListener("mousemove", (e) => {
       if (this.startPos == null) return;
 
       if (this.bone == null) {

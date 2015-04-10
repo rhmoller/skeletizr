@@ -3,7 +3,7 @@ import Bone from "./Bone";
 export default class ModelSheet {
 
   constructor(assets) {
-    var svg = SVG('canvas').size(800, 600);
+    var svg = SVG('canvas').size("100%", "100%");
     svg.style({
        "-user-select" : "none",
        "-webkit-user-select" : "none",
@@ -54,7 +54,18 @@ export default class ModelSheet {
         "x": bone.x,
         "y": bone.y,
         "a": bone.a
-      }
+      };
+
+      var line = sheet.svg.line(0.5 * width, 0, 0.5 * width, height);
+      line.stroke("#f00");
+      line.addTo(group);
+      this.line = line;
+
+      var line = sheet.svg.line(0.5 * width, 0, 0.5 * width, height);
+      line.stroke("#f00");
+      line.addTo(group);
+      this.line = line;
+
       pose.push(bp);
     }
     console.log("Stored key frame " + this.frame);

@@ -3,7 +3,7 @@
   "description": "Minimalistic 2D animation tool",
   "version": "0.0.1",
   "author": "Rene Hangstrup Møller (http://giddyplanet.com)",
-  "keywords": ["2d", "animation", "bones", "cutout"],
+  "keywords": ["2d", "animation", "bones", "cutout", "skeleton"],
   "repository": "rhmoller/skeletizr",
   "license": "MIT",
 
