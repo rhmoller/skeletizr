@@ -144,6 +144,7 @@ function insertTree() {
           let node = tgt.parentNode;
           let old = node.children[2].style.display;
           node.children[2].style.display = (old == "none") ? "block" : "none";
+          node.children[0].className = (old == "none") ? "fa fa-minus-square-o" : "fa fa-plus-square-o";
     }
   });
 
