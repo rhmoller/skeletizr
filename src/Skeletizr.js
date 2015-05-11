@@ -176,7 +176,6 @@ export default class Skeletizr {
       let tm1 = 1 - t;
 
       let f2 = (f + 1) % self.keyframes.length;
-      console.log(`${f} -> ${f2}`);
 
       let frame1 = self.keyframes[f];
       let frame2 = self.keyframes[f2];
@@ -190,9 +189,6 @@ export default class Skeletizr {
         bone.a = (pose1.a * tm1) + (pose2.a * t);
       }
 
-      // console.log(`frame ${f} t ${t} ${tm1} -- ${self.bones[0].x}`);
-
-      console.log(`${self.bones[0].name}`);
       self.bones[0].repaint();
     }
 

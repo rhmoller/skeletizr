@@ -41,8 +41,6 @@ export default class ModelSheet {
       }
       pose.push(bp);
     }
-    console.log("Stored key frame " + this.keyframes.length);
-    console.log(JSON.stringify(pose));
     this.keyframes.push(pose);
   }
 
@@ -68,8 +66,6 @@ export default class ModelSheet {
 
       pose.push(bp);
     }
-    console.log("Stored key frame " + this.frame);
-    console.log(JSON.stringify(pose));
     this.keyframes[this.frame] = pose;
   }
 
@@ -83,7 +79,6 @@ export default class ModelSheet {
       bone.a = bp.a;
       bone.apply();
     }
-    console.log("Loaded key frame " + this.frame);
   }
 
   next() {

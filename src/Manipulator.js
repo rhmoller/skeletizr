@@ -38,8 +38,6 @@ export default class Manipulator {
       var a = this.bone.a;
       var ma = this.getAngleFromMouseToBone(mx, my, this.bone);
 
-      console.log(ma);
-
       this.startPos = {
             "x": x,
             "y": y,
@@ -62,8 +60,6 @@ export default class Manipulator {
 
       let ma = this.getAngleFromMouseToBone(mx, my, this.bone);
       let da = ma - this.startPos.ma;
-
-      //console.log(`dx ${dx} dy ${dy} da ${da}`);
 
       if (this.mode == "move") {
         var pt1 = this.svg.node.createSVGPoint();
@@ -131,15 +127,11 @@ export default class Manipulator {
 
         let p = e.target.instance;
         while (p != svg && newBone == null) {
-          console.log("parent: " + p);
-
           if (this.group == p) {
-            console.log("Matches group for overlay");
             newBone = this.bone;
           } else {
             for (let b of this.skeletizr.bones) {
               if (b.group == p) {
-                console.log("Matches group for bone " + b.name);
                 newBone = b;
                 break;
               }
