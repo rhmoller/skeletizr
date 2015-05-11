@@ -1,275 +1,258 @@
-import Bone from "./Bone";
-
 export default class Manipulator {
 
-  constructor(sheet, bones) {
-    this.setMode("Select");
-    this.sheet = sheet;
+  constructor(skeletizr) {
+    this.svg = skeletizr.svg;
+    this.root = skeletizr.root;
+    this.skeletizr = skeletizr;
 
-    this.overlay = sheet.svg.rect(200, 200);
-    this.overlay.stroke("blue");
-    this.overlay.fill("transparent");
-    this.overlay.addTo(sheet.root);
-    this.overlay.attr("pointer-events", "none");
+    this.moved = false;
 
-    this.pivotPoint = sheet.svg.circle(5);
-    this.pivotPoint.fill("red");
-    this.pivotPoint.addTo(sheet.root);
+    this.group = this.svg.group();
+    var bounds = this.svg.rect(0, 0);
+    bounds.fill("transparent")
+    bounds.stroke("#ff0");
+    this.bounds = bounds;
 
-    this.bones = bones;
-    this.bone = null;
-    this.manipulated = false;
+    var dot = this.svg.circle(10);
+    dot.fill("rgba(255,0,0,0.25)");
+    dot.stroke("#f00");
+    dot.addTo(this.group);
+    this.dot = dot;
+
+    bounds.addTo(this.group);
+    this.group.addTo(this.root);
+
     this.addListeners();
+    this.mode = "move";
+  }
+
+  addListeners() {
+    let svg = this.svg;
+
+    svg.on("mousedown", (e) => {
+      if (this.bone == null) return;
+      var mx = e.clientX - 400;
+      var my = e.clientY - 300;
+      var x = this.bone.x;
+      var y = this.bone.y;
+      var a = this.bone.a;
+      var ma = this.getAngleFromMouseToBone(mx, my, this.bone);
+
+      console.log(ma);
+
+      this.startPos = {
+            "x": x,
+            "y": y,
+            "a": a,
+            "pivotX": this.bone.pivotX,
+            "pivotY": this.bone.pivotY,
+            "mx" : mx,
+            "my" : my,
+            "ma" : ma
+          }
+    });
+
+    svg.on("mousemove", (e) => {
+      if (!this.startPos) return;
+
+      this.moved = true;
+
+      let mx = e.clientX - 400;
+      let my = e.clientY - 300;
+
+      let ma = this.getAngleFromMouseToBone(mx, my, this.bone);
+      let da = ma - this.startPos.ma;
+
+      //console.log(`dx ${dx} dy ${dy} da ${da}`);
+
+      if (this.mode == "move") {
+        var pt1 = this.svg.node.createSVGPoint();
+        pt1.x = mx;
+        pt1.y = my;
+        var gpt1 = pt1.matrixTransform(this.bone.group.parent.node.getTransformToElement(this.root.node).inverse());
+
+        var pt2 = this.svg.node.createSVGPoint();
+        pt2.x = this.startPos.mx;
+        pt2.y = this.startPos.my;
+        var gpt2 = pt2.matrixTransform(this.bone.group.parent.node.getTransformToElement(this.root.node).inverse());
+
+        var dx = gpt1.x - gpt2.x;
+        var dy = gpt1.y - gpt2.y;
+
+        this.bone.x = this.startPos.x + dx;
+        this.bone.y = this.startPos.y + dy;
+      } else if (this.mode == "rotate") {
+        this.bone.a = this.startPos.a + da;
+      } else if (this.mode == "pivot") {
+        var pt1 = this.svg.node.createSVGPoint();
+        pt1.x = mx;
+        pt1.y = my;
+        var gpt1 = pt1.matrixTransform(this.bone.group.parent.node.getTransformToElement(this.root.node).inverse());
+
+        var pt2 = this.svg.node.createSVGPoint();
+        pt2.x = this.startPos.mx;
+        pt2.y = this.startPos.my;
+        var gpt2 = pt2.matrixTransform(this.bone.group.parent.node.getTransformToElement(this.root.node).inverse());
+
+        var dx = gpt1.x - gpt2.x;
+        var dy = gpt1.y - gpt2.y;
+
+        var pt1 = this.svg.node.createSVGPoint();
+        pt1.x = dx;
+        pt1.y = dy;
+
+       this.bone.x = this.startPos.x + dx;
+       this.bone.y = this.startPos.y + dy;
+
+        pt1.x = mx;
+        pt1.y = my;
+        pt2.x = this.startPos.mx;
+        pt2.y = this.startPos.my;
+        var gpt3 = pt1.matrixTransform(this.bone.group.node.getTransformToElement(this.root.node).inverse());
+        var gpt4 = pt2.matrixTransform(this.bone.group.node.getTransformToElement(this.root.node).inverse());
+
+        let dx2 = gpt3.x - gpt4.x;
+        let dy2 = gpt3.y - gpt4.y;
+
+       this.bone.pivotX = this.startPos.pivotX + dx2;
+        this.bone.pivotY = this.startPos.pivotY + dy2;
+
+      }
+
+      requestAnimationFrame(() => {
+        this.bone.repaint();
+        this.updateOverlay();
+      });
+    });
+
+    svg.on("mouseup", e => {
+      if (!this.moved) {
+        let newBone = null;
+
+        let p = e.target.instance;
+        while (p != svg && newBone == null) {
+          console.log("parent: " + p);
+
+          if (this.group == p) {
+            console.log("Matches group for overlay");
+            newBone = this.bone;
+          } else {
+            for (let b of this.skeletizr.bones) {
+              if (b.group == p) {
+                console.log("Matches group for bone " + b.name);
+                newBone = b;
+                break;
+              }
+            }
+          }
+
+          p = p.parent;
+        }
+
+        if (newBone != this.bone) {
+          this.select(newBone);
+        }
+      }
+
+      this.startPos = null;
+      this.moved = false;
+    });
+
+    document.addEventListener("keyup", e => {
+      switch (e.keyCode) {
+        case 77: // m
+          this.setMode("move");
+          break;
+        case 82: // r
+          this.setMode("rotate");
+          break;
+        case 80: // p
+          this.setMode("pivot");
+          break;
+
+        case 81: // q
+          this.setMode("ik");
+          break;
+
+          case 75: // k
+            this.skeletizr.addKeyFrame();
+            break;
+          case 85: // u
+            this.skeletizr.updateKeyFrame();
+            break;
+
+          case 69: // e
+            this.skeletizr.exportData();
+            break;
+          case 73: // i
+            this.skeletizr.import();
+            break;
+
+          case 37:
+            this.skeletizr.prevFrame();
+            break;
+
+          case 39:
+            this.skeletizr.nextFrame();
+            break;
+
+          case 33: // pgup
+            this.bone.svgimg.forward();
+            break;
+
+          case 34: // pgdn
+            this.bone.svgimg.backward();
+            break;
+
+          case 36: // home
+            this.bone.svgimg.front();
+            break;
+
+          case 35:
+            this.bone.svgimg.back();
+            break;
+
+          case 65:
+            if (this.skeletizr.animating) {
+              this.skeletizr.stopAnimation();
+            } else {
+              this.skeletizr.startAnimation();
+            }
+        }
+      });
   }
 
   select(bone) {
-      this.bone = bone;
+    this.bone = bone;
+    if (bone == null) {
+      this.group.hide();
+    } else {
+      let group = this.group;
+      group.show();
       this.updateOverlay();
+    }
   }
 
   updateOverlay() {
-    if (this.bone != null) {
-      var tx = this.bone.group.node.getTransformToElement(this.sheet.root.node);
-      var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
+    let bone = this.bone;
+    if (!bone) return;
+    this.bounds.size(bone.img.width, bone.img.height);
 
-      this.overlay.transform("matrix", txs);
-      this.overlay.width(this.bone.width);
-      this.overlay.height(this.bone.height);
+    var tx = bone.imgGroup.node.getTransformToElement(this.root.node);
+    var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
+    this.group.transform("matrix", txs);
 
-      this.pivotPoint.transform("matrix", txs);
-      this.pivotPoint.center(this.bone.pivotX, this.bone.pivotY);
-
-      this.overlay.stroke("blue")
-      this.pivotPoint.fill("red");
-    } else {
-      this.overlay.stroke("transparent")
-      this.pivotPoint.fill("transparent");
-    }
-
+    this.dot.center(bone.pivotX, bone.pivotY);
   }
 
-  setMode(mode) {
-    document.getElementById("mode").innerHTML = mode;
-    this.mode = mode;
-  }
-
-  getAngleFromMouseToBone(mouseEvent, bone) {
-    var mx = mouseEvent.clientX - 400;
-    var my = mouseEvent.clientY - 300;
+  getAngleFromMouseToBone(mx, my, bone) {
     var ma = Math.atan2(bone.x + bone.pivotX - mx, this.bone.y + this.bone.pivotY - my);
     if (ma < 0) ma += 2.0 * Math.PI
     ma *= -180 / Math.PI;
     return ma;
   }
 
-  addListeners() {
-    let svg = this.sheet.svg.node;
-
-    svg.addEventListener("mousedown", (e) => {
-      this.manipulated = false;
-
-      if (this.bone == null) {
-        return;
-      }
-
-      switch (this.mode) {
-        case "Move":
-        case "Rotate":
-          var mx = e.clientX - 400;
-          var my = e.clientY - 300;
-          var x = this.bone.x;
-          var y = this.bone.y;
-          var a = this.bone.a;
-          var ma = this.getAngleFromMouseToBone(e, this.bone);
-          this.startPos = {
-                "x": x,
-                "y": y,
-                "a": a,
-                "mx" : mx,
-                "my" : my,
-                "ma" : ma
-              }
-          break;
-
-        case "Pivot":
-          var mx = e.clientX - 400;
-          var my = e.clientY - 300;
-          var x = this.bone.pivotX;
-          var y = this.bone.pivotY;
-
-          this.startPos = {
-            "x": x,
-            "y": y,
-            "mx" : mx,
-            "my" : my,
-          }
-          break;
-      }
-
-    });
-
-    svg.addEventListener("mouseup", (e) => {
-      if (!this.manipulated) {
-        let t = e.target;
-        if (t.instance == this.sheet.svg || t.instance == this.sheet.root) {
-          this.select(null);
-          this.startPos = null;
-          return;
-        }
-
-
-        let g = e.target.instance.parent;
-
-        if (g.type == "g") {
-          for (let bone of this.bones) {
-            if (bone.group === g) {
-              this.select(bone);
-              this.startPos = null;
-              return;
-            }
-          }
-        }
-
-        this.select(null);
-      }
-
-
-      this.startPos = null;
-    });
-
-    svg.addEventListener("mousemove", (e) => {
-      if (this.startPos == null) return;
-
-      if (this.bone == null) {
-        return;
-      }
-
-      this.manipulated = true;
-
-      var mx = e.clientX - 400;
-      var my = e.clientY - 300;
-      var ma = this.getAngleFromMouseToBone(e, this.bone);
-
-      let self = this;
-
-      switch (this.mode) {
-        case "Move":
-          requestAnimationFrame(() => {
-            if (self.startPos == null) return;
-
-            var pt1 = self.bone.sheet.svg.node.createSVGPoint();
-            pt1.x = mx;
-            pt1.y = my;
-            var gpt1 = pt1.matrixTransform(self.bone.group.parent.node.getTransformToElement(self.bone.sheet.root.node).inverse());
-
-            var pt2 = self.bone.sheet.svg.node.createSVGPoint();
-            pt2.x = self.startPos.mx;
-            pt2.y = self.startPos.my;
-            var gpt2 = pt2.matrixTransform(self.bone.group.parent.node.getTransformToElement(self.bone.sheet.root.node).inverse());
-
-            var dx = gpt1.x - gpt2.x;
-            var dy = gpt1.y - gpt2.y;
-
-            var x = self.startPos.x + dx;
-            var y = self.startPos.y + dy;
-            self.bone.x = x;
-            self.bone.y = y;
-            self.bone.apply();
-            self.updateOverlay();
-          });
-          break;
-
-        case "Rotate":
-          var da = ma - this.startPos.ma;
-          var a = this.startPos.a + da;
-          this.bone.a = a;
-          this.bone.apply();
-          this.updateOverlay();
-          break;
-
-        case "Pivot":
-            requestAnimationFrame(() => {
-              if (self.startPos == null) return;
-              var pt1 = self.bone.sheet.svg.node.createSVGPoint();
-              pt1.x = mx;
-              pt1.y = my;
-              var gpt1 = pt1.matrixTransform(self.bone.group.node.getTransformToElement(self.bone.sheet.root.node).inverse());
-
-              var pt2 = self.bone.sheet.svg.node.createSVGPoint();
-              pt2.x = self.startPos.mx;
-              pt2.y = self.startPos.my;
-              var gpt2 = pt2.matrixTransform(self.bone.group.node.getTransformToElement(self.bone.sheet.root.node).inverse());
-
-              var dx = gpt2.x - gpt1.x;
-              var dy = gpt2.y - gpt1.y;
-
-              self.bone.pivotX = self.startPos.x + dx;
-              self.bone.pivotY = self.startPos.y + dy;
-              self.bone.apply();
-              self.updateOverlay();
-
-
-            });
-
-          break;
-      }
-    });
-
-    document.addEventListener("keyup", (e) => {
-      switch (e.keyCode) {
-        case 77:
-          this.setMode("Move");
-          break;
-        case 82:
-          this.setMode("Rotate");
-          break;
-        case 80:
-          this.setMode("Pivot");
-          break;
-
-
-        case 68:
-          this.sheet.add();
-          break;
-        case 83:
-          this.sheet.save();
-          break;
-        case 37:
-          this.sheet.prev();
-          break;
-        case 39:
-          this.sheet.next();
-          break;
-
-
-
-          case 33:
-            if (this.bone) {
-              this.bone.shape.forward();
-            }
-            break;
-
-          case 34:
-            if (this.bone) {
-              this.bone.shape.backward();
-            }
-            break;
-
-          case 35:
-            if (this.bone) {
-              this.bone.shape.back();
-            }
-            break;
-
-            case 36:
-              if (this.bone) {
-                this.bone.shape.front();
-              }
-              break;
-      }
-
-    });
-
+  setMode(mode) {
+    this.mode = mode;
   }
-
 }
