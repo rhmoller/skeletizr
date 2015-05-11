@@ -2,6 +2,7 @@ export default class Bone {
 
   constructor(skeletizr, name, img, x = 0, y = 0, a = 0, pivotX = 0, pivotY = 0) {
     this.root = skeletizr.root;
+    this.layers = skeletizr.layers;
     this.svg = skeletizr.svg;
     this.name = name;
     this.img = img;
@@ -23,7 +24,8 @@ export default class Bone {
 
     var group = this.svg.group();
     group.addClass("bone");
-    group.add(imgGroup);
+    // group.add(imgGroup);
+    this.layers.add(imgGroup);
     this.group  = group;
     this.imgGroup = imgGroup;
 
@@ -52,8 +54,9 @@ export default class Bone {
 
     var tx = this.group.node.getTransformToElement(this.root.node);
     var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
-//    this.svgimg.transform("matrix", txs);
-//
+
+    this.imgGroup.transform("matrix", txs);    //this.imgGroup.transform(txs);
+
     for (let child of this.children) {
       child.repaint();
     }

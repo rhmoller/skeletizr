@@ -131,7 +131,7 @@ export default class Manipulator {
             newBone = this.bone;
           } else {
             for (let b of this.skeletizr.bones) {
-              if (b.group == p) {
+              if (b.imgGroup == p) {
                 newBone = b;
                 break;
               }
@@ -189,19 +189,19 @@ export default class Manipulator {
             break;
 
           case 33: // pgup
-            this.bone.svgimg.forward();
+            this.bone.imgGroup.forward();
             break;
 
           case 34: // pgdn
-            this.bone.svgimg.backward();
+            this.bone.imgGroup.backward();
             break;
 
           case 36: // home
-            this.bone.svgimg.front();
+            this.bone.imgGroup.front();
             break;
 
           case 35:
-            this.bone.svgimg.back();
+            this.bone.imgGroup.back();
             break;
 
           case 65:
@@ -230,7 +230,7 @@ export default class Manipulator {
     if (!bone) return;
     this.bounds.size(bone.img.width, bone.img.height);
 
-    var tx = bone.imgGroup.node.getTransformToElement(this.root.node);
+    var tx = bone.group.node.getTransformToElement(this.root.node);
     var txs = `${tx.a},${tx.b},${tx.c},${tx.d},${tx.e},${tx.f}`;
     this.group.transform("matrix", txs);
 

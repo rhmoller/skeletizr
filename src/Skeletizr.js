@@ -44,6 +44,10 @@ export default class Skeletizr {
     dot.addTo(root);
     dot.center(0, 0);
 
+    let layers = svg.group();
+    layers.addTo(this.root);
+    this.layers = layers;
+
     for (let boneCfg of this.config.bones) {
       let imgPath = boneCfg.img;
       let img = this.assets[imgPath];
